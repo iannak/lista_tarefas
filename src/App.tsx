@@ -1,26 +1,38 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import TaskForm from "./components/TaskForm"; // Importe Props do componente TaskForm
+import TaskList from "./components/TaskList";
+import { AppContainer } from "./styles";
+import { Box } from "@mui/material";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  completed: boolean;
 }
+
+const App: React.FC = () => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  const handleTaskSubmit = (title: string, description: string) => {
+    const newTask: Task = {
+      id: Math.random().toString(36).substr(2, 9),
+      title,
+      description,
+      completed: false,
+    };
+    setTasks([...tasks, newTask]);
+  };
+
+  return (
+    <AppContainer>
+      <h1>Task Manager</h1>
+      <Box>
+        <TaskForm onSubmit={handleTaskSubmit} />{" "}
+      </Box>
+      <TaskList tasks={tasks} setTasks={setTasks} />
+    </AppContainer>
+  );
+};
 
 export default App;

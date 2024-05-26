@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   List,
   ListItem,
-  ListItemText,
   ListItemSecondaryAction,
   IconButton,
   Dialog,
@@ -12,27 +11,18 @@ import {
   Button,
   TextField,
   Checkbox,
-  Pagination,
+  ToggleButton,
+  Box,
 } from "@mui/material";
 import { Delete, Edit, Check } from "@mui/icons-material";
-import styled from "styled-components";
-import { PaginationList, TableContainerList } from "./styles";
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  completed: boolean;
-}
-
-interface Props {
-  tasks: Task[];
-  setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
-}
-
-const StyledListItemText = styled(ListItemText)<{ completed: boolean }>`
-  text-decoration: ${(props) => (props.completed ? "line-through" : "none")};
-`;
+import {
+  PaginationList,
+  StyledListItemText,
+  TableContainerList,
+  TextFieldSearch,
+  ToggleButtonGroupFilter,
+} from "./styles";
+import { Props, Task } from "../../@types";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -42,6 +32,8 @@ const TaskList: React.FC<Props> = ({ tasks, setTasks }) => {
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filter, setFilter] = useState<string | null>("all");
 
   const handleEditOpen = (task: Task) => {
     setEditTask(task);
@@ -89,7 +81,30 @@ const TaskList: React.FC<Props> = ({ tasks, setTasks }) => {
     setCurrentPage(page);
   };
 
-  const paginatedTasks = tasks.slice(
+  const handleFilterChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newFilter: string | null
+  ) => {
+    setFilter(newFilter);
+    setCurrentPage(1);
+  };
+
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearchTerm =
+      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      task.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesFilter =
+      filter === "completed"
+        ? task.completed
+        : filter === "not_completed"
+        ? !task.completed
+        : true;
+
+    return matchesSearchTerm && matchesFilter;
+  });
+
+  const paginatedTasks = filteredTasks.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -97,6 +112,41 @@ const TaskList: React.FC<Props> = ({ tasks, setTasks }) => {
   return (
     <>
       <TableContainerList>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "16px",
+            marginTop: "16px",
+          }}
+        >
+          <TextFieldSearch
+            label="Search"
+            variant="outlined"
+            fullWidth
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <ToggleButtonGroupFilter
+            value={filter}
+            exclusive
+            onChange={handleFilterChange}
+            aria-label="task filter"
+          >
+            <ToggleButton value="all" aria-label="all tasks">
+              All
+            </ToggleButton>
+            <ToggleButton value="completed" aria-label="completed tasks">
+              Completed
+            </ToggleButton>
+            <ToggleButton
+              value="not_completed"
+              aria-label="not completed tasks"
+            >
+              Not Completed
+            </ToggleButton>
+          </ToggleButtonGroupFilter>
+        </Box>
+
         <List>
           {paginatedTasks.map((task) => (
             <ListItem key={task.id} button>
@@ -123,9 +173,10 @@ const TaskList: React.FC<Props> = ({ tasks, setTasks }) => {
           ))}
         </List>
         <PaginationList
-          count={Math.ceil(tasks.length / ITEMS_PER_PAGE)}
+          count={Math.ceil(filteredTasks.length / ITEMS_PER_PAGE)}
           page={currentPage}
           onChange={handleChangePage}
+          sx={{ mt: 2 }}
         />
       </TableContainerList>
       <Dialog open={openDialog} onClose={handleEditClose}>

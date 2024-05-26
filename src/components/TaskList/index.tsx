@@ -22,7 +22,8 @@ import {
   TextFieldSearch,
   ToggleButtonGroupFilter,
 } from "./styles";
-import { Props, Task } from "../../@types";
+import TaskForm from "../TaskForm";
+import { Task, Props } from "../../@types";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -115,38 +116,42 @@ const TaskList: React.FC<Props> = ({ tasks, setTasks }) => {
         <Box
           sx={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             marginBottom: "16px",
             marginTop: "16px",
           }}
         >
-          <TextFieldSearch
-            label="Search"
-            variant="outlined"
-            fullWidth
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <ToggleButtonGroupFilter
-            value={filter}
-            exclusive
-            onChange={handleFilterChange}
-            aria-label="task filter"
-          >
-            <ToggleButton value="all" aria-label="all tasks">
-              All
-            </ToggleButton>
-            <ToggleButton value="completed" aria-label="completed tasks">
-              Completed
-            </ToggleButton>
-            <ToggleButton
-              value="not_completed"
-              aria-label="not completed tasks"
+          <TaskForm tasks={tasks} setTasks={setTasks} />
+          <Box display="flex" width="100%" mb={2}>
+            <TextFieldSearch
+              label="Search"
+              variant="outlined"
+              fullWidth
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{ mr: 2 }}
+            />
+            <ToggleButtonGroupFilter
+              value={filter}
+              exclusive
+              onChange={handleFilterChange}
+              aria-label="task filter"
             >
-              Not Completed
-            </ToggleButton>
-          </ToggleButtonGroupFilter>
+              <ToggleButton value="all" aria-label="all tasks">
+                All
+              </ToggleButton>
+              <ToggleButton value="completed" aria-label="completed tasks">
+                Completed
+              </ToggleButton>
+              <ToggleButton
+                value="not_completed"
+                aria-label="not completed tasks"
+              >
+                Not Completed
+              </ToggleButton>
+            </ToggleButtonGroupFilter>
+          </Box>
         </Box>
-
         <List>
           {paginatedTasks.map((task) => (
             <ListItem key={task.id} button>

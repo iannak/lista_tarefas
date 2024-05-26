@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
   IconButton,
   Dialog,
   DialogTitle,
@@ -13,10 +12,11 @@ import {
   Button,
   TextField,
   Checkbox,
+  Pagination,
 } from "@mui/material";
 import { Delete, Edit, Check } from "@mui/icons-material";
 import styled from "styled-components";
-import { TableContainerList } from "./styles";
+import { PaginationList, TableContainerList } from "./styles";
 
 interface Task {
   id: string;
@@ -30,15 +30,18 @@ interface Props {
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
 }
 
-const StyledTableCell = styled(TableCell)<{ completed: boolean }>`
+const StyledListItemText = styled(ListItemText)<{ completed: boolean }>`
   text-decoration: ${(props) => (props.completed ? "line-through" : "none")};
 `;
+
+const ITEMS_PER_PAGE = 5;
 
 const TaskList: React.FC<Props> = ({ tasks, setTasks }) => {
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleEditOpen = (task: Task) => {
     setEditTask(task);
@@ -79,47 +82,51 @@ const TaskList: React.FC<Props> = ({ tasks, setTasks }) => {
     setTasks(updatedTasks);
   };
 
+  const handleChangePage = (
+    event: React.ChangeEvent<unknown>,
+    page: number
+  ) => {
+    setCurrentPage(page);
+  };
+
+  const paginatedTasks = tasks.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <>
       <TableContainerList>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell style={{ minWidth: "150px" }}>Title</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {tasks.map((task) => (
-              <TableRow key={task.id}>
-                <StyledTableCell completed={task.completed}>
-                  {task.title}
-                </StyledTableCell>
-                <StyledTableCell completed={task.completed}>
-                  {task.description}
-                </StyledTableCell>
-                <TableCell align="right">
-                  <IconButton onClick={() => handleEditOpen(task)} size="small">
-                    <Edit sx={{ color: "orange" }} />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => handleDelete(task.id)}
-                    size="small"
-                  >
-                    <Delete sx={{ color: "red" }} />
-                  </IconButton>
-                  <Checkbox
-                    icon={<Check sx={{ color: "green" }} />}
-                    checkedIcon={<Check sx={{ color: "green" }} />}
-                    checked={task.completed}
-                    onChange={() => handleToggleCompleted(task.id)}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <List>
+          {paginatedTasks.map((task) => (
+            <ListItem key={task.id} button>
+              <StyledListItemText
+                primary={task.title}
+                secondary={task.description}
+                completed={task.completed}
+              />
+              <ListItemSecondaryAction>
+                <IconButton onClick={() => handleEditOpen(task)} size="small">
+                  <Edit sx={{ color: "orange" }} />
+                </IconButton>
+                <IconButton onClick={() => handleDelete(task.id)} size="small">
+                  <Delete sx={{ color: "red" }} />
+                </IconButton>
+                <Checkbox
+                  icon={<Check sx={{ color: "green" }} />}
+                  checkedIcon={<Check sx={{ color: "green" }} />}
+                  checked={task.completed}
+                  onChange={() => handleToggleCompleted(task.id)}
+                />
+              </ListItemSecondaryAction>
+            </ListItem>
+          ))}
+        </List>
+        <PaginationList
+          count={Math.ceil(tasks.length / ITEMS_PER_PAGE)}
+          page={currentPage}
+          onChange={handleChangePage}
+        />
       </TableContainerList>
       <Dialog open={openDialog} onClose={handleEditClose}>
         <DialogTitle>Edit Task</DialogTitle>

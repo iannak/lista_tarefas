@@ -14,21 +14,11 @@ interface Task {
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  const handleTaskSubmit = (title: string, description: string) => {
-    const newTask: Task = {
-      id: Math.random().toString(36).substr(2, 9),
-      title,
-      description,
-      completed: false,
-    };
-    setTasks([...tasks, newTask]);
-  };
-
   return (
     <AppContainer>
       <h1>Task Manager</h1>
       <Box>
-        <TaskForm onSubmit={handleTaskSubmit} />{" "}
+        <TaskForm tasks={[]} setTasks={setTasks} />{" "}
       </Box>
       <TaskList tasks={tasks} setTasks={setTasks} />
     </AppContainer>

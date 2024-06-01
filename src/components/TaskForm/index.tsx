@@ -4,13 +4,14 @@ import { Props, Task } from "../../@types";
 import { Box, Button, Container, TextField, Typography } from "@mui/material";
 import { collection, addDoc } from "firebase/firestore"; // Importe as funções necessárias do Firestore
 import { db } from "../../services/firebase";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Snackbar } from "@mui/material";
 
 export const TaskForm = ({ tasks, setTasks }: Props) => {
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   const handleAddTask = async () => {
     if (newTitle.trim() === "" || newDescription.trim() === "") {
@@ -35,11 +36,13 @@ export const TaskForm = ({ tasks, setTasks }: Props) => {
       setNewTitle("");
       setNewDescription("");
 
-      toast.success("Task added successfully!");
-    } catch (error) {
+      setSnackbarMessage("Task added successfully!");
+      setOpenSnackbar(true);
+    } catch (error: any) {
       console.error("Error adding document: ", error);
       setError("Error adding task. Please try again later.");
-      toast.error("Error adding task. Please try again later.");
+      setSnackbarMessage(error);
+      setOpenSnackbar(true);
     }
   };
 
@@ -88,7 +91,12 @@ export const TaskForm = ({ tasks, setTasks }: Props) => {
         </Button>
       </Box>
 
-      <ToastContainer position="top-right" autoClose={2000} />
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setOpenSnackbar(false)}
+        message={snackbarMessage}
+      />
     </Container>
   );
 };

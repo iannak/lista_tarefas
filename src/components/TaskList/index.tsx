@@ -13,21 +13,19 @@ import {
   Checkbox,
   ToggleButton,
   Box,
+  TableContainer,
+  Container,
+  ToggleButtonGroup,
+  ListItemText,
+  Pagination,
 } from "@mui/material";
 import { Delete, Edit, Check } from "@mui/icons-material";
-import {
-  PaginationList,
-  StyledListItemText,
-  TableContainerList,
-  TextFieldSearch,
-  ToggleButtonGroupFilter,
-} from "./styled";
 import TaskForm from "../TaskForm";
 import { Task, Props } from "../../@types";
 
 const ITEMS_PER_PAGE = 5;
 
-const TaskList: React.FC<Props> = ({ tasks, setTasks }) => {
+export const TaskList = ({ tasks, setTasks }: Props) => {
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
@@ -111,31 +109,32 @@ const TaskList: React.FC<Props> = ({ tasks, setTasks }) => {
   );
 
   return (
-    <>
-      <TableContainerList>
+    <Container component="main" maxWidth="xs">
+      <TableContainer>
         <Box
           sx={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            marginBottom: "16px",
-            marginTop: "16px",
+            margin: "16px",
           }}
         >
           <TaskForm tasks={tasks} setTasks={setTasks} />
-          <Box display="flex" width="100%" mb={2}>
-            <TextFieldSearch
+
+          <Box display="flex" mb={2}>
+            <TextField
               label="Search"
               variant="outlined"
               fullWidth
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{ mr: 2 }}
             />
-            <ToggleButtonGroupFilter
+
+            <ToggleButtonGroup
               value={filter}
               exclusive
               onChange={handleFilterChange}
-              aria-label="task filter"
+              aria-label="all tasks"
             >
               <ToggleButton value="all" aria-label="all tasks">
                 All
@@ -149,17 +148,13 @@ const TaskList: React.FC<Props> = ({ tasks, setTasks }) => {
               >
                 Not Completed
               </ToggleButton>
-            </ToggleButtonGroupFilter>
+            </ToggleButtonGroup>
           </Box>
         </Box>
         <List>
           {paginatedTasks.map((task) => (
             <ListItem key={task.id} button>
-              <StyledListItemText
-                primary={task.title}
-                secondary={task.description}
-                completed={task.completed}
-              />
+              <ListItemText primary={task.title} secondary={task.description} />
               <ListItemSecondaryAction>
                 <IconButton onClick={() => handleEditOpen(task)} size="small">
                   <Edit sx={{ color: "orange" }} />
@@ -177,13 +172,13 @@ const TaskList: React.FC<Props> = ({ tasks, setTasks }) => {
             </ListItem>
           ))}
         </List>
-        <PaginationList
+        <Pagination
           count={Math.ceil(filteredTasks.length / ITEMS_PER_PAGE)}
           page={currentPage}
           onChange={handleChangePage}
           sx={{ mt: 2 }}
         />
-      </TableContainerList>
+      </TableContainer>
       <Dialog open={openDialog} onClose={handleEditClose}>
         <DialogTitle>Edit Task</DialogTitle>
         <DialogContent>
@@ -209,7 +204,7 @@ const TaskList: React.FC<Props> = ({ tasks, setTasks }) => {
           <Button onClick={handleSaveChanges}>Save</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Container>
   );
 };
 

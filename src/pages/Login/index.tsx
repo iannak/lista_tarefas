@@ -15,8 +15,7 @@ import * as yup from "yup";
 import { loginSchema } from "../../schemas/validationSchemas";
 import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
 import { useAuth } from "../../context/AuthContext";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Snackbar } from "@mui/material";
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -25,6 +24,8 @@ export const Login = () => {
   const [password, setPassword] = useState("");
   const [buttonDisabled, setButtonDisabled] = useState(true);
   const [errors, setErrors] = useState<string[]>([]);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   useEffect(() => {
     if (email.trim() && password.trim()) {
@@ -47,20 +48,23 @@ export const Login = () => {
         const auth = getAuth();
         signInWithEmailAndPassword(auth, email, password)
           .then((userCredential) => {
-            console.log("Login successful:", userCredential.user);
             signIn();
             navigate("/tasks");
-            toast.success("Login successful!");
+            setSnackbarMessage("Login successful!");
+            setOpenSnackbar(true);
           })
           .catch((error) => {
             console.error("Error during login:", error.message);
             setErrors([error.message]);
           });
       }
-    } catch (err) {
+    } catch (err: any) {
       if (err instanceof yup.ValidationError) {
         setErrors(err.errors);
       }
+
+      setSnackbarMessage(err);
+      setOpenSnackbar(true);
     }
   };
   return (
@@ -173,7 +177,12 @@ export const Login = () => {
         <Copyright /> Copyright
       </Box>
 
-      <ToastContainer position="top-right" autoClose={2000} />
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setOpenSnackbar(false)}
+        message={snackbarMessage}
+      />
     </Container>
   );
 };

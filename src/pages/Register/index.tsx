@@ -11,8 +11,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../services/firebase";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Snackbar } from "@mui/material";
 
 export const Register = () => {
   const navigate = useNavigate();
@@ -20,6 +19,8 @@ export const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -31,15 +32,17 @@ export const Register = () => {
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      navigate("/tasks");
-      toast.success("Registration successful!");
+      navigate("/");
+      setSnackbarMessage("Registration successful!");
+      setOpenSnackbar(true);
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
         setError("Email already in use. Please try logging in instead.");
       } else {
         setError(err.message);
       }
-      toast.error(error);
+      setSnackbarMessage(error);
+      setOpenSnackbar(true);
     }
   };
 
@@ -122,7 +125,12 @@ export const Register = () => {
           </Typography>
         )}
       </Box>
-      <ToastContainer position="top-right" autoClose={2000} />
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setOpenSnackbar(false)}
+        message={snackbarMessage}
+      />
     </Container>
   );
 };

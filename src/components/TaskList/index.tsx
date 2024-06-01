@@ -21,7 +21,7 @@ import {
   TableContainerList,
   TextFieldSearch,
   ToggleButtonGroupFilter,
-} from "./styles";
+} from "./styled";
 import TaskForm from "../TaskForm";
 import { Task, Props } from "../../@types";
 

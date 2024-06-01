@@ -126,6 +126,7 @@ export const Register = () => {
         )}
       </Box>
       <Snackbar
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
         open={openSnackbar}
         autoHideDuration={6000}
         onClose={() => setOpenSnackbar(false)}

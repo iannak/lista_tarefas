@@ -1,59 +1,89 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Props, Task } from "../../@types";
 import { Box, Button, Container, TextField, Typography } from "@mui/material";
+import { collection, addDoc } from "firebase/firestore"; // Importe as funções necessárias do Firestore
+import { db } from "../../services/firebase";
 
 export const TaskForm = ({ tasks, setTasks }: Props) => {
-	const [newTitle, setNewTitle] = useState("");
-	const [newDescription, setNewDescription] = useState("");
-	const [error, setError] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-	const handleAddTask = () => {
-		if (newTitle.trim() === "" || newDescription.trim() === "") {
-			setError("Title and description and required");
-			return;
-		}
+  const handleAddTask = async () => {
+    if (newTitle.trim() === "" || newDescription.trim() === "") {
+      setError("Title and description are required");
+      return;
+    }
 
-		setError(null);
+    setError(null);
 
-		const newTask: Task = {
-			id: uuidv4(),
-			title: newTitle,
-			description: newDescription,
-			completed: false,
-		};
+    const newTask: Task = {
+      id: uuidv4(),
+      title: newTitle,
+      description: newDescription,
+      completed: false,
+    };
 
-		setTasks([...tasks, newTask]);
-		setNewTitle("");
-		setNewDescription("");
-	};
+    try {
+      const docRef = await addDoc(collection(db, "tasks"), newTask);
+      console.log("Document written with ID: ", docRef.id);
 
-	return (
-		<Container component="main" maxWidth="xs">
-			<Box sx={{ width: "100%" }}>
-				<TextField
-					label="Title"
-					variant="outlined"
-					fullWidth
-					value={newTitle}
-					onChange={(e) => setNewTitle(e.target.value)}
-				/>
-				<TextField
-					label="Description"
-					variant="outlined"
-					fullWidth
-					value={newDescription}
-					onChange={(e) => setNewDescription(e.target.value)}
-				/>
+      setTasks([...tasks, newTask]);
+      setNewTitle("");
+      setNewDescription("");
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      setError("Error adding task. Please try again later.");
+    }
+  };
 
-				{error && <Typography color="error">{error}</Typography>}
+  return (
+    <Container component="main" maxWidth="xs">
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          marginTop: 2,
+        }}
+      >
+        <TextField
+          label="Title"
+          variant="outlined"
+          fullWidth
+          margin="normal"
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+        />
+        <TextField
+          label="Description"
+          variant="outlined"
+          fullWidth
+          margin="normal"
+          multiline
+          rows={4}
+          value={newDescription}
+          onChange={(e) => setNewDescription(e.target.value)}
+        />
 
-				<Button variant="contained" color="primary" onClick={handleAddTask}>
-					Add Task
-				</Button>
-			</Box>
-		</Container>
-	);
+        {error && (
+          <Typography color="error" variant="body2" gutterBottom>
+            {error}
+          </Typography>
+        )}
+
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleAddTask}
+          sx={{ marginTop: 2 }}
+        >
+          Add Task
+        </Button>
+      </Box>
+    </Container>
+  );
 };
 
 export default TaskForm;

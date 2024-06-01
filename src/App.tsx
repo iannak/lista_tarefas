@@ -6,38 +6,30 @@ import {
   Navigate,
   Outlet,
 } from "react-router-dom";
-import { useAuth } from "./context/AuthContext";
-import TaskList from "./components/TaskList";
-import { Task } from "./@types";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import { TasksPage } from "./pages/Tasks";
 
 const PrivateRoute: React.FC = () => {
   const { signed } = useAuth();
-  return signed ? <Outlet /> : <Navigate to="/login" />;
+  console.log("signed", signed);
+  return signed ? <Outlet /> : <Navigate to="/tasks" />;
 };
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route element={<PrivateRoute />}>
-          <Route
-            path="/tasks"
-            element={
-              <TaskList
-                tasks={[]}
-                setTasks={function (value: React.SetStateAction<Task[]>): void {
-                  throw new Error("Function not implemented.");
-                }}
-              />
-            }
-          />
-        </Route>
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route element={<PrivateRoute />}>
+            <Route path="/tasks" element={<TasksPage />} />
+          </Route>
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 };
 

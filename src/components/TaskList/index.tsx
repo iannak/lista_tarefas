@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   List,
   ListItem,
@@ -13,8 +13,7 @@ import {
   Checkbox,
   ToggleButton,
   Box,
-  TableContainer,
-  Container,
+  Typography,
   ToggleButtonGroup,
   ListItemText,
   Pagination,
@@ -22,17 +21,37 @@ import {
 import { Delete, Edit, Check } from "@mui/icons-material";
 import TaskForm from "../TaskForm";
 import { Task, Props } from "../../@types";
+import {
+  collection,
+  deleteDoc,
+  onSnapshot,
+  updateDoc,
+  DocumentReference,
+  doc,
+} from "firebase/firestore";
+import { db } from "../../services/firebase";
 
 const ITEMS_PER_PAGE = 5;
 
-export const TaskList = ({ tasks, setTasks }: Props) => {
+const TaskList = ({ setTasks }: Props) => {
+  const [tasks, setLocalTasks] = useState<Task[]>([]);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<string | null>("all");
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "tasks"), (snapshot) => {
+      const fetchedTasks: Task[] = [];
+      snapshot.forEach((doc) => {
+        fetchedTasks.push({ ...doc.data(), id: doc.id } as Task);
+      });
+      setLocalTasks(fetchedTasks);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleEditOpen = (task: Task) => {
     setEditTask(task);
@@ -48,44 +67,46 @@ export const TaskList = ({ tasks, setTasks }: Props) => {
     setEditedDescription("");
   };
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
+    if (!editTask) return;
     const updatedTask = {
-      ...editTask!,
       title: editedTitle,
       description: editedDescription,
     };
-    const updatedTasks = tasks.map((task) =>
-      task.id === updatedTask.id ? updatedTask : task
-    );
-    setTasks(updatedTasks);
-    handleEditClose();
+    try {
+      await updateDoc(doc(db, "tasks", editTask.id), updatedTask);
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === editTask.id ? { ...task, ...updatedTask } : task
+        )
+      );
+      handleEditClose();
+    } catch (error) {
+      console.error("Error updating task: ", error);
+    }
   };
 
-  const handleDelete = (taskId: string) => {
-    const updatedTasks = tasks.filter((task) => task.id !== taskId);
-    setTasks(updatedTasks);
+  const handleDelete = async (taskId: string) => {
+    try {
+      await deleteDoc(doc(db, "tasks", taskId));
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+    } catch (error) {
+      console.error("Error deleting task: ", error);
+    }
   };
 
-  const handleToggleCompleted = (taskId: string) => {
-    const updatedTasks = tasks.map((task) =>
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    );
-    setTasks(updatedTasks);
-  };
-
-  const handleChangePage = (
-    event: React.ChangeEvent<unknown>,
-    page: number
-  ) => {
-    setCurrentPage(page);
-  };
-
-  const handleFilterChange = (
-    event: React.MouseEvent<HTMLElement>,
-    newFilter: string | null
-  ) => {
-    setFilter(newFilter);
-    setCurrentPage(1);
+  const handleToggleCompleted = async (taskId: string) => {
+    const taskToUpdate = tasks.find((task) => task.id === taskId);
+    if (!taskToUpdate) return;
+    const updatedTask = { ...taskToUpdate, completed: !taskToUpdate.completed };
+    try {
+      await updateDoc(doc(db, "tasks", taskId), updatedTask);
+      setTasks((prevTasks) =>
+        prevTasks.map((task) => (task.id === taskId ? updatedTask : task))
+      );
+    } catch (error) {
+      console.error("Error updating task: ", error);
+    }
   };
 
   const filteredTasks = tasks.filter((task) => {
@@ -103,58 +124,52 @@ export const TaskList = ({ tasks, setTasks }: Props) => {
     return matchesSearchTerm && matchesFilter;
   });
 
-  const paginatedTasks = filteredTasks.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
   return (
-    <Container component="main" maxWidth="xs">
-      <TableContainer>
-        <Box
+    <Box sx={{ maxWidth: 600, margin: "auto" }}>
+      <TaskForm tasks={tasks} setTasks={setTasks} />
+      <TextField
+        label="Search"
+        variant="outlined"
+        fullWidth
+        onChange={(e) => setSearchTerm(e.target.value)}
+        sx={{ mt: 2 }}
+      />
+      <ToggleButtonGroup
+        value={filter}
+        exclusive
+        onChange={(e, newFilter) => setFilter(newFilter)}
+        aria-label="all tasks"
+        sx={{ mt: 2 }}
+      >
+        <ToggleButton value="all" aria-label="all tasks">
+          All
+        </ToggleButton>
+        <ToggleButton value="completed" aria-label="completed tasks">
+          Completed
+        </ToggleButton>
+        <ToggleButton value="not_completed" aria-label="not completed tasks">
+          Not Completed
+        </ToggleButton>
+      </ToggleButtonGroup>
+      {filteredTasks.length === 0 ? (
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          No tasks found.
+        </Typography>
+      ) : (
+        <List
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            margin: "16px",
+            mt: 2,
           }}
         >
-          <TaskForm tasks={tasks} setTasks={setTasks} />
-
-          <Box display="flex" mb={2}>
-            <TextField
-              label="Search"
-              variant="outlined"
-              fullWidth
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ mr: 2 }}
-            />
-
-            <ToggleButtonGroup
-              value={filter}
-              exclusive
-              onChange={handleFilterChange}
-              aria-label="all tasks"
-            >
-              <ToggleButton value="all" aria-label="all tasks">
-                All
-              </ToggleButton>
-              <ToggleButton value="completed" aria-label="completed tasks">
-                Completed
-              </ToggleButton>
-              <ToggleButton
-                value="not_completed"
-                aria-label="not completed tasks"
-              >
-                Not Completed
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-        </Box>
-        <List>
-          {paginatedTasks.map((task) => (
-            <ListItem key={task.id} button>
-              <ListItemText primary={task.title} secondary={task.description} />
+          {filteredTasks.map((task) => (
+            <ListItem key={task.id} disablePadding>
+              <ListItemText
+                primary={task.title}
+                secondary={task.description}
+                sx={{
+                  textDecoration: task.completed ? "line-through" : "none",
+                }}
+              />
               <ListItemSecondaryAction>
                 <IconButton onClick={() => handleEditOpen(task)} size="small">
                   <Edit sx={{ color: "orange" }} />
@@ -172,13 +187,13 @@ export const TaskList = ({ tasks, setTasks }: Props) => {
             </ListItem>
           ))}
         </List>
+      )}
+      {filteredTasks.length > ITEMS_PER_PAGE && (
         <Pagination
           count={Math.ceil(filteredTasks.length / ITEMS_PER_PAGE)}
-          page={currentPage}
-          onChange={handleChangePage}
           sx={{ mt: 2 }}
         />
-      </TableContainer>
+      )}
       <Dialog open={openDialog} onClose={handleEditClose}>
         <DialogTitle>Edit Task</DialogTitle>
         <DialogContent>
@@ -204,7 +219,7 @@ export const TaskList = ({ tasks, setTasks }: Props) => {
           <Button onClick={handleSaveChanges}>Save</Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 

@@ -26,7 +26,6 @@ import {
   deleteDoc,
   onSnapshot,
   updateDoc,
-  DocumentReference,
   doc,
 } from "firebase/firestore";
 import { db } from "../../services/firebase";

@@ -4,6 +4,8 @@ import { Props, Task } from "../../@types";
 import { Box, Button, Container, TextField, Typography } from "@mui/material";
 import { collection, addDoc } from "firebase/firestore"; // Importe as funções necessárias do Firestore
 import { db } from "../../services/firebase";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export const TaskForm = ({ tasks, setTasks }: Props) => {
   const [newTitle, setNewTitle] = useState("");
@@ -32,9 +34,12 @@ export const TaskForm = ({ tasks, setTasks }: Props) => {
       setTasks([...tasks, newTask]);
       setNewTitle("");
       setNewDescription("");
+
+      toast.success("Task added successfully!");
     } catch (error) {
       console.error("Error adding document: ", error);
       setError("Error adding task. Please try again later.");
+      toast.error("Error adding task. Please try again later.");
     }
   };
 
@@ -82,6 +87,8 @@ export const TaskForm = ({ tasks, setTasks }: Props) => {
           Add Task
         </Button>
       </Box>
+
+      <ToastContainer position="top-right" autoClose={2000} />
     </Container>
   );
 };

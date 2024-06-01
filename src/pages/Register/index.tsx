@@ -11,6 +11,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../services/firebase";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export const Register = () => {
   const navigate = useNavigate();
@@ -30,12 +32,14 @@ export const Register = () => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       navigate("/tasks");
+      toast.success("Registration successful!");
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
         setError("Email already in use. Please try logging in instead.");
       } else {
         setError(err.message);
       }
+      toast.error(error);
     }
   };
 
@@ -118,6 +122,7 @@ export const Register = () => {
           </Typography>
         )}
       </Box>
+      <ToastContainer position="top-right" autoClose={2000} />
     </Container>
   );
 };

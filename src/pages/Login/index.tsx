@@ -15,6 +15,8 @@ import * as yup from "yup";
 import { loginSchema } from "../../schemas/validationSchemas";
 import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
 import { useAuth } from "../../context/AuthContext";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -48,6 +50,7 @@ export const Login = () => {
             console.log("Login successful:", userCredential.user);
             signIn();
             navigate("/tasks");
+            toast.success("Login successful!");
           })
           .catch((error) => {
             console.error("Error during login:", error.message);
@@ -60,7 +63,6 @@ export const Login = () => {
       }
     }
   };
-
   return (
     <Container component="main" maxWidth="xs">
       <Box
@@ -170,6 +172,8 @@ export const Login = () => {
       >
         <Copyright /> Copyright
       </Box>
+
+      <ToastContainer position="top-right" autoClose={2000} />
     </Container>
   );
 };
